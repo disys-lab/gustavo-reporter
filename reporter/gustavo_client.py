@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 import httpx
 
-from reporter.config import GUSTAVO_API_URL
+from reporter.config import GUSTAVO_API_HOST, GUSTAVO_API_PORT
 
 
 @dataclass
@@ -30,7 +30,7 @@ async def verify_credential(username: str, secret: str) -> VerifiedIdentity | No
     async with httpx.AsyncClient(timeout=10) as client:
         try:
             resp = await client.post(
-                f"{GUSTAVO_API_URL}/api/auth/verify",
+                f"http://{GUSTAVO_API_HOST}:{GUSTAVO_API_PORT}/api/auth/verify",
                 json={"credential": f"{username}:{secret}"},
             )
         except httpx.RequestError:

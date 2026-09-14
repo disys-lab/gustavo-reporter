@@ -6,10 +6,14 @@ file — reporter has no persistent state of its own to justify one.
 """
 import os
 
-# Gustavo's Next.js port (NOT FastAPI's 8000 — that's bound to 127.0.0.1
-# inside gustavo's own container and unreachable from here). /api/* is
-# proxied through to FastAPI by Next.js's own rewrites.
-GUSTAVO_API_URL = os.environ.get("GUSTAVO_API_URL", "http://gustavo:3000")
+# Host/port kept separate, matching every other service's own config
+# (MANAGER_HOST/MANAGER_PORT, REDIS_HOST/REDIS_PORT, ...) rather than
+# one pre-built URL. GUSTAVO_API_PORT must be gustavo's Next.js port
+# (NOT FastAPI's 8000 — that's bound to 127.0.0.1 inside gustavo's own
+# container and unreachable from here). /api/* is proxied through to
+# FastAPI by Next.js's own rewrites.
+GUSTAVO_API_HOST = os.environ.get("GUSTAVO_API_HOST", "gustavo")
+GUSTAVO_API_PORT = os.environ.get("GUSTAVO_API_PORT", "3000")
 
 REDIS_HOST = os.environ.get("REDIS_HOST", "")
 REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))

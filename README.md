@@ -76,7 +76,7 @@ this way with no changes on gustavo's side.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `GUSTAVO_API_URL` | `http://gustavo:3000` | Gustavo's Next.js port — **not** FastAPI's 8000, which is bound to `127.0.0.1` inside gustavo's own container. `/api/*` is proxied through by Next.js. |
+| `GUSTAVO_API_HOST` / `GUSTAVO_API_PORT` | `gustavo` / `3000` | Where to reach gustavo's own API. Port **must** be gustavo's Next.js port — **not** FastAPI's 8000, which is bound to `127.0.0.1` inside gustavo's own container. `/api/*` is proxied through by Next.js. |
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_AUTH_TOKEN` | — / `6379` / — | Same Redis instance gustavo's platform config points at. |
 | `CACHE_PREFIX` | `gustavo-reports` | Must match gustavo's own `CACHE_PREFIX`. |
 | `CACHE_EXPIRE_TIME` | `120` | Redis key TTL in seconds. Must match gustavo's own `CACHE_EXPIRE_TIME` for consistent expiry behavior. |
@@ -86,7 +86,7 @@ this way with no changes on gustavo's side.
 ```bash
 docker build -t gustavo-reporter .
 docker run -d --name gustavo-reporter -p 8080:8080 \
-  -e GUSTAVO_API_URL=http://gustavo:3000 \
+  -e GUSTAVO_API_HOST=gustavo -e GUSTAVO_API_PORT=3000 \
   -e REDIS_HOST=... -e REDIS_AUTH_TOKEN=... \
   --network <same network as the gustavo container> \
   gustavo-reporter
@@ -96,7 +96,7 @@ Or run directly for local development:
 
 ```bash
 pip install -r requirements.txt
-GUSTAVO_API_URL=http://localhost:3000 REDIS_HOST=localhost REDIS_AUTH_TOKEN=... \
+GUSTAVO_API_HOST=localhost GUSTAVO_API_PORT=3000 REDIS_HOST=localhost REDIS_AUTH_TOKEN=... \
   uvicorn reporter.main:app --reload --port 8080
 ```
 
