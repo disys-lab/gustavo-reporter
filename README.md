@@ -1,5 +1,7 @@
 # gustavo-reporter
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 REST alternative to gustavo-worker's direct Redis writes for status
 reports (vitals + container stats). Workers keep the ability to write
 to Redis directly — this is an additional path, not a replacement.
@@ -123,3 +125,11 @@ curl -u nebula:nebula -X POST http://localhost:8080/api/reports/testdevicegroup1
 - gustavo-worker itself is unchanged — it doesn't call this yet.
   Adding that is a separate, later task; this repo is tested against
   a stub client (see above) until then.
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the
+[LICENSE](LICENSE) file for details. Reporter is a standalone service
+(separate process, separate repo) that talks to gustavo only over
+HTTP and a shared Redis instance — it carries its own license,
+independent of gustavo's own GPLv3.
