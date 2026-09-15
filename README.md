@@ -10,7 +10,7 @@ to Redis directly — this is an additional path, not a replacement.
 
 Workers writing straight to Redis means every worker needs Redis
 network access and the platform's shared Redis credential. Reporter
-lets a worker report over HTTPS instead, authenticated with the same
+lets a worker report over HTTP(S) instead, authenticated with the same
 Nebula identity it already uses for the Manager — no direct Redis
 access required for that worker.
 
