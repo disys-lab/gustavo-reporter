@@ -43,6 +43,48 @@ that's actually distinct per worker.
 Responses: `200` on success, `401` if the credential doesn't verify,
 `403` if it verifies but isn't granted `rw` on `device_group`.
 
+### `GET /whoami`
+
+HTTP Basic auth (Nebula username/token) — any valid identity, no
+device-group grant needed, since this returns nothing about any
+device group. Returns the caller's address as reporter observes it:
+
+```json
+{"remote_ip": "203.0.113.7"}
+```
+
+Requires auth so this can't be used as an open IP-echo service by
+anyone who finds the endpoint. Like `node_id` above, this is only as
+reliable as the network path to reporter — if reporter itself sits
+behind another reverse proxy, this reflects that proxy's address, not
+the original caller's, unless the proxy forwards `X-Forwarded-For`
+(not currently trusted here).
+
+### `POST /api/directory/{device_group}`
+
+HTTP Basic auth, `rw` required on `device_group`. Body:
+
+```json
+{"node_id": "worker-01", "host_ip": "10.0.0.5", "remote_ip": "203.0.113.7"}
+```
+
+Upserts — one current record per `node_id`, not a log. `node_id` is
+caller-supplied, same as in `StatusReport`.
+
+### `GET /api/directory/{device_group}`
+
+HTTP Basic auth, any grant (`ro` or `rw`) on `device_group`. Returns:
+
+```json
+{"error": false, "response": [{"node_id": "worker-01", "host_ip": "10.0.0.5", "remote_ip": "203.0.113.7", "updated_at": 1741270000}]}
+```
+
+`updated_at` is stamped by reporter at write time, not caller-supplied.
+
+### `DELETE /api/directory/{device_group}/{node_id}`
+
+HTTP Basic auth, `rw` required on `device_group`. Removes one entry.
+
 ### `GET /health`
 
 Liveness only — doesn't touch Redis or gustavo.
@@ -82,6 +124,8 @@ this way with no changes on gustavo's side.
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_AUTH_TOKEN` | — / `6379` / — | Same Redis instance gustavo's platform config points at. |
 | `CACHE_PREFIX` | `gustavo-reports` | Must match gustavo's own `CACHE_PREFIX`. |
 | `CACHE_EXPIRE_TIME` | `120` | Redis key TTL in seconds. Must match gustavo's own `CACHE_EXPIRE_TIME` for consistent expiry behavior. |
+| `DIRECTORY_PREFIX` | `gustavo-directory` | Redis key prefix for the worker identity directory — separate namespace from `CACHE_PREFIX`. |
+| `DIRECTORY_TTL_SECONDS` | `-1` | Gustavo-Settings-managed, injected whenever gustavo launches/restarts this container. `-1` (or unset) means directory entries never expire; a positive integer is the Redis TTL in seconds, reapplied on every write. |
 
 ## Running
 
@@ -119,12 +163,19 @@ curl -u nebula:nebula -X POST http://localhost:8080/api/reports/testdevicegroup1
 
 ## Current scope
 
-- Write path only. There's no read/query API yet — viewing reports
-  still goes through gustavo's own (currently admin-only) Monitoring
+- Status reports (`/api/reports/{device_group}`) are write-only from
+  here — viewing them still goes through gustavo's own Monitoring
   endpoints, reading the same Redis.
-- gustavo-worker itself is unchanged — it doesn't call this yet.
-  Adding that is a separate, later task; this repo is tested against
-  a stub client (see above) until then.
+- The worker identity directory (`/whoami`, `/api/directory/...`) has
+  both write and read/delete endpoints. gustavo's own API is expected
+  to be the reader for its Worker Directory UI, filtering results by
+  the caller's device-group grants before display — reporter itself
+  does no such filtering beyond the per-request rw/ro check already
+  described above.
+- Periodic refresh of directory entries (re-calling `/whoami`, keeping
+  `host_ip`/`remote_ip` current) is not this repo's concern — that's a
+  separate, dedicated component (a Nebula cron job), not gustavo-worker
+  or gustavo-reporter itself.
 
 ## License
 

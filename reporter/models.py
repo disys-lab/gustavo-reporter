@@ -27,3 +27,24 @@ class StatusReport(BaseModel):
     root_disk_usage: UsageStats
     cpu_usage: CpuUsage
     apps_containers: list[dict]
+
+
+class NodeIdentity(BaseModel):
+    """
+    A single worker's self-reported identity: a stable id plus its
+    currently-observed network location. `device_group` is not a field
+    here - like StatusReport, it's supplied via the URL path instead,
+    since it also drives the write-authorization check.
+
+    `node_id` is the same opaque, caller-supplied identity StatusReport
+    uses - generated and persisted by the worker itself, not inferred
+    by reporter.
+    """
+    node_id: str
+    host_ip: str
+    remote_ip: str
+
+
+class WhoAmI(BaseModel):
+    """Response for `GET /whoami` - the caller's address as reporter observes it."""
+    remote_ip: str

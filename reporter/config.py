@@ -23,3 +23,14 @@ REDIS_AUTH_TOKEN = os.environ.get("REDIS_AUTH_TOKEN", "")
 # for Cache.py to find what reporter writes.
 CACHE_PREFIX = os.environ.get("CACHE_PREFIX", "gustavo-reports")
 CACHE_EXPIRE_TIME = int(os.environ.get("CACHE_EXPIRE_TIME", "120"))
+
+# Key prefix for the worker identity directory - separate namespace from
+# CACHE_PREFIX above, since directory entries are upserted-in-place
+# (one current record per node_id) rather than a report-per-timestamp log.
+DIRECTORY_PREFIX = os.environ.get("DIRECTORY_PREFIX", "gustavo-directory")
+
+# Gustavo-Settings-managed - injected as an env var whenever gustavo
+# launches/restarts this container. Unset or -1 means directory entries
+# never expire; a positive integer is the Redis TTL in seconds,
+# reapplied on every write.
+DIRECTORY_TTL_SECONDS = int(os.environ.get("DIRECTORY_TTL_SECONDS", "-1"))
