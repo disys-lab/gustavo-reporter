@@ -1,9 +1,12 @@
 """Client for gustavo's own API — currently just credential verification."""
+import logging
 from dataclasses import dataclass
 
 import httpx
 
 from reporter.config import GUSTAVO_API_HOST, GUSTAVO_API_PORT
+
+logging.basicConfig(level=logging.INFO)
 
 
 @dataclass
@@ -33,13 +36,18 @@ async def verify_credential(username: str, secret: str) -> VerifiedIdentity | No
                 f"http://{GUSTAVO_API_HOST}:{GUSTAVO_API_PORT}/api/auth/verify",
                 json={"credential": f"{username}:{secret}"},
             )
-        except httpx.RequestError:
+        except httpx.RequestError as exc:
+            # never log secret - username only, plus the exception type/message,
+            # which is enough to tell a connection failure from a timeout.
+            logging.warning(f"verify_credential({username!r}): request to gustavo failed - {type(exc).__name__}: {exc}")
             return None
 
     if resp.status_code != 200:
+        logging.warning(f"verify_credential({username!r}): gustavo returned HTTP {resp.status_code}: {resp.text[:200]!r}")
         return None
     body = resp.json()
     if body.get("error"):
+        logging.warning(f"verify_credential({username!r}): gustavo rejected the credential - {body.get('response')!r}")
         return None
 
     data = body["response"]
